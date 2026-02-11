@@ -15,11 +15,16 @@ export const rateLimit = async (c: Context, next: Next) => {
   const body =
     c.req.method === "POST" ? await c.req.json().catch(() => null) : null;
 
+  // const identifier =
+  //   body?.userId ||
+  //   c.req.header("x-forwarded-for") ||
+  //   c.req.raw?.socket?.remoteAddress ||
+  //   "anonymous";
   const identifier =
-    body?.userId ||
-    c.req.header("x-forwarded-for") ||
-    c.req.raw?.socket?.remoteAddress ||
-    "anonymous";
+  body?.userId ||
+  c.req.header("x-forwarded-for") ||
+  c.req.header("x-real-ip") ||
+  "anonymous";
 
   const now = Date.now();
 
