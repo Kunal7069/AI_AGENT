@@ -1,40 +1,36 @@
 # -------- Stage 1: Build --------
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
+# Install OpenSSL (important for prisma)
+RUN apt-get update -y && apt-get install -y openssl
+
 COPY package*.json ./
 
-# Install dependencies
 RUN npm install
 
-# Copy source code
 COPY . .
 
-# Generate Prisma client (if using Prisma)
-RUN npx prisma generate || true
+# Generate Prisma client
+RUN npx prisma generate
 
-# Build TypeScript
-RUN npm run dev
+# Build project (IMPORTANT: use build, not dev)
+RUN npm run build
 
 
 # -------- Stage 2: Production --------
-FROM node:20-alpine
+FROM node:20-slim
 
 WORKDIR /app
 
-# Copy only necessary files from builder
+RUN apt-get update -y && apt-get install -y openssl
+
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
-# Expose port (Render / Docker will override)
 EXPOSE 3000
 
-# Start server
 CMD ["node", "dist/index.js"]
-
- 
